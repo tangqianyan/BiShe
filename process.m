@@ -2,8 +2,8 @@ clear;
 
 % -----------------set configuration---------------------
 ShotList = load('.\config\ShotNumber.txt'); 
-duration = 0.01;  % 每次截取的时间段
-t=[3.14 3.14+duration];  % 初始寝室时间 
+duration = 0.1;  % 每次截取的时间段
+t=[5.14 5.14+duration];  % 初始寝室时间 
 nstep=8;   % 时间点的个数
 t_row = t;
 CH=24;
@@ -16,7 +16,7 @@ ROW=16;
 for shot_i = 1:size(ShotList)
     shot = ShotList(shot_i);
     
-    while t(2) <= 3.15;
+    while t(2) <= 5.24;
         T0=linspace(t(1),t(2),nstep); % 生成nstep个时间点
         if  shot<44000
             DIR='F:\ProgramProject\ECEI-loaddata\';
@@ -60,12 +60,12 @@ for shot_i = 1:size(ShotList)
         for i = 1:nstep
             A = data(:,:,i);
             circleNumber = 0;
-            [circleNumber,stats,thres,rects,bund] = judgeCircle(A,6,0.04,i)
+            [circleNumber,stats,thres,rects,bund,interpMatrix] = judgeCircle(A,100,0.04,i)
             if circleNumber > 0
-                drawTag(shot,A,t,rects,i,bund);
+                drawTag(shot,interpMatrix,t,rects,i,bund);
                 fprintf(fid_inst ,'%.14f %d\n',T(i),circleNumber);
             else
-                drawTag(shot,A,t,[],i,[]);
+                drawTag(shot,interpMatrix,t,[],i,[]);
                 fprintf(fid_uninst ,'%.14f\n',T(i));
             end
         end

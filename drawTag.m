@@ -7,8 +7,8 @@ else
 
 end
 %-------------Draw Fingure-------------
-CH=24;
-ROW=16;
+CH=93;
+ROW=61;
 % ≤‚¡ø«¯”Ú
 CHH=linspace(CH,1,CH);
 RWW=linspace(ROW,1,ROW);
@@ -28,7 +28,7 @@ set(gca,'XGrid','off');
     axis tight;
     axis equal;
     colorbar;
-    set(gca,'CLim',[-0.2,0.3]);
+    set(gca,'CLim',[0,1]);
     h_axes=findobj(gcf,'type','axes');
     set(h_axes,'LineWidth',1.5);
     set(h_axes,'fontsize',14)

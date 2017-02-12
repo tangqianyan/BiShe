@@ -1,10 +1,10 @@
-function [number,stats,thres,rects,Bund]=judgeCircle(newMatrix,minAera,thresThreshold,fig_i)
+function [number,stats,thres,rects,Bund,interpMatrix]=judgeCircle(newMatrix,minAera,thresThreshold,fig_i)
 %-----------------------------SET DEFAULT----------------------------------
 if ~exist('minAera','var'),
-    minAera=6;
+    minAera=500;
 end
 if ~exist('thresThreshold','var'),
-    thresThreshold = 0.04;
+    thresThreshold = 0.1;
 end
 
 %--------------------------------------------------------------
@@ -12,59 +12,80 @@ end
 newMatrix = fliplr(newMatrix);
 newMatrix = flipud(newMatrix);
 % 
-% nmax = max(max(newMatrix));
-% nmin = min(min(newMatrix));
-% 
-% newMatrix = (newMatrix-nmin)/ (nmax-nmin);
-% figure,
-% imshow(newMatrix);
+nmax = max(max(newMatrix));
+nmin = min(min(newMatrix));
 
+newMatrix = (newMatrix-nmin)/ (nmax-nmin);
+
+ZI = interp2(newMatrix,2,'spline')
+interpMatrix = ZI;
+interpMatrix = fliplr(interpMatrix);
+interpMatrix = flipud(interpMatrix);
 % [A_hat E_hat iter] = exact_alm_rpca(newMatrix,0.2);
 % figure,
 % imshow(A_hat);
 % newMatrix = A_hat;
 %--------------------
-CH=24;
-ROW=16;
-for i=1:CH-1
-    for j=1:ROW-1
-        A(i,j) = (newMatrix(i,j)-newMatrix(i+1,j))^2 +(newMatrix(i,j)-newMatrix(i+1,j+1))^2+(newMatrix(i,j)-newMatrix(i,j+1))^2;
-    end
-end
+% CH=24;
+% ROW=16;
+% for i=1:CH-1
+%     for j=1:ROW-1
+%         A(i,j) = (newMatrix(i,j)-newMatrix(i+1,j))^2 +(newMatrix(i,j)-newMatrix(i+1,j+1))^2+(newMatrix(i,j)-newMatrix(i,j+1))^2;
+%     end
+% end
 % newMatrix = A;
 %--------------------
 
-
+newMatrix = ZI;
 %------------------------空间滤波-----------------
 I = newMatrix;
-w1=fspecial('average',[3 3]);
-w2=fspecial('sobel');
-w3=fspecial('gaussian',[3 3],0.5);
-w4=fspecial('laplacian',0.2);
-w5=fspecial('log',[5 5],0.5);
+w1=fspecial('average',[5 5]);
 g1=imfilter(I,w1,'replicate');
-g2=imfilter(I,w2,'replicate');
-g3=imfilter(I,w3,'replicate');
-g4=imfilter(I,w4,'replicate');
-g5=imfilter(I,w5,'replicate');
 g6=medfilt2(I);
 %-------------------------------------------------
-newMatrix = g6;
-%-----------------------------------------------
+% g1=imfilter(g1,w1,'replicate');
 
+P=[0 1 0
+   1 1 1
+   0 1 0];
+
+A1 = g1;
+A2=imdilate(A1,P);%图像A1被结构元素B膨胀
+A3=imdilate(A2,P);
+A4=imdilate(A3,P);
+figure,
+subplot(221),imshow(A1);
+subplot(222),imshow(A2);
+subplot(223),imshow(A3);
+subplot(224),imshow(A4);
+
+%--------------------------
+newMatrix = A1;
 thres = graythresh(newMatrix);
 BW =im2bw(newMatrix,thres);
-BW = bwareaopen(BW,minAera);
+
+%------------
+figure,
+subplot(221),imshow(BW);
+%--------------
+BW = bwareaopen(BW,minAera,4);
+subplot(222),imshow(BW);
+
 se = strel('disk',3);
 BW = imclose(BW,se);
-BW1 = imclearborder(BW,1);
-BW2 = imfill(BW1,'holes');
-%-------------------------Judge Threshold--------------------------------
-if thres < thresThreshold
-    BW2 = 1-BW2;
-end
+subplot(223),imshow(BW);
+%----------
 
-[Bund,L] = bwboundaries(BW,'noholes');
+BW2 = imfill(BW,'holes');
+subplot(224),imshow(BW2);
+
+%-------------------------Judge Threshold--------------------------------
+% if thres < thresThreshold
+%     BW2 = 1-BW2;
+% end
+
+
+[Bund,L] = bwboundaries(BW2,'noholes');
 img_reg=regionprops(BW2,'area','boundingbox');
 % areas=[img_reg.Area];
 rects=cat(1,img_reg.BoundingBox);
