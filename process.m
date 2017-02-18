@@ -2,9 +2,11 @@ clear;
 
 % -----------------set configuration---------------------
 ShotList = load('.\config\ShotNumber.txt'); 
-duration = 0.1;  % 每次截取的时间段
-t=[5.14 5.14+duration];  % 初始寝室时间 
-nstep=8;   % 时间点的个数
+duration = 0.002;  % 每次截取的时间段
+beginTime = 6.663
+endTime = 6.665
+t=[beginTime beginTime + duration];  % 初始时间 
+nstep=50;   % 时间点的个数
 t_row = t;
 CH=24;
 ROW=16;
@@ -16,7 +18,7 @@ ROW=16;
 for shot_i = 1:size(ShotList)
     shot = ShotList(shot_i);
     
-    while t(2) <= 5.24;
+    while t(2) <= endTime;
         T0=linspace(t(1),t(2),nstep); % 生成nstep个时间点
         if  shot<44000
             DIR='F:\ProgramProject\ECEI-loaddata\';
@@ -54,13 +56,16 @@ for shot_i = 1:size(ShotList)
         %--------------------Create Result File--------------------------
         str_inst = strcat(path,'result_interested.txt');
         str_uninst = strcat(path,'result_uninterested.txt');
+        str_attribute = strcat(path,'result_attributes.txt');
         fid_inst = fopen(str_inst,'a');
         fid_uninst = fopen(str_uninst,'a');
+        fid_attribute = fopen(str_attribute,'a');
 
         for i = 1:nstep
             A = data(:,:,i);
             circleNumber = 0;
-            [circleNumber,stats,thres,rects,bund,interpMatrix] = judgeCircle(A,100,0.04,i)
+            [circleNumber,stats,thres,rects,bund,interpMatrix] = judgeCircle(A,100,0.04,i);
+            recordAttribute(fid_attribute,circleNumber,stats,T(i));
             if circleNumber > 0
                 drawTag(shot,interpMatrix,t,rects,i,bund);
                 fprintf(fid_inst ,'%.14f %d\n',T(i),circleNumber);
@@ -70,11 +75,12 @@ for shot_i = 1:size(ShotList)
             end
         end
         
-       t = t +  0.1;
+       t = t +  duration ;
        clear T_sigal data0 data1 data2 A;
            
     end
     t =t_row;
+    fclose(fid_attribute);
     fclose(fid_inst);
     fclose(fid_uninst);
 
